@@ -60,7 +60,7 @@ AND KKS2.Id = KKS3.ParentAnlagenObjektId
 ) A ON A.KKS3_ID = S.AnlagenObjektId
 INNER JOIN(
 SELECT HW.HWModulId as HardwareModul_Id, HW.DPNummer as DPNummer, HW.IstInvertiert as IstInvertiert,
-HW.DPTyp as DPTyp, HW.DPModus as DPModus, HW.AnzahlDP as AnzahlDP, HW.VariablenId as VariablenId
+HW.DPTypId as DPTyp, HW.DPModusId as DPModus, HW.AnzahlDP as AnzahlDP, HW.VariablenId as VariablenId
 FROM HW_DPSignal HW
 ) B ON  B.VariablenId = S.Id
 
@@ -128,6 +128,12 @@ ON MFE6.Signal_Id = MFE7.Signal_Id
 
 
 
+--------VIEW Parameter----------------------------------------------
+SELECT S.KonfigurationId AS Konfiguration, Q.StaNr AS Station, Q.ParaNr AS ParaBlockNr, 
+Q.ParaMin AS ParaMin, Q.ParaMax AS ParaMax, Q.ParaNKS AS Nachkommastellen
+FROM VarQuSe Q
+LEFT OUTER JOIN Station S
+ON S.Id = Q.StaNr
 
 
 
@@ -179,7 +185,7 @@ SELECT * FROM Variable WHERE SignalId=1859042
 
 
 CREATE VIEW SignalMitBezeichnung AS
-SELECT AO0, AO1, AO2, AO3, S.Name AS SO, BEREICH, BAUWERK, FUNKTION, ELEMENT, S.IndexText AS INDEX_TEXT, S.KommentarText AS KOMMENTAR, S.Id AS SIGNAL_ID
+SELECT AO0, AO1, AO2, AO3, S.Name AS SO, BEREICH, BAUWERK, FUNKTION, ELEMENT, S.IndexText AS INDEX_TEXT, ST.Name AS Typ, S.Id AS SIGNAL_ID
 FROM Signal S
 INNER JOIN(
 	SELECT KKS0.Name AS AO0, KKS0.Bezeichnung AS BEREICH, 
@@ -192,6 +198,8 @@ INNER JOIN(
 	AND KKS1.Id = KKS2.ParentAnlagenObjektId
 	AND KKS2.Id = KKS3.ParentAnlagenObjektId
 ) A ON A.KKS3_ID = S.AnlagenObjektId
+INNER JOIN SignalTyp ST
+ON ST.Id = S.TypId
 
 SELECT * 
 FROM SignalMitBezeichnung S
@@ -237,12 +245,12 @@ WHERE SUBQUERY.VariablenId = 1875068
 SELECT * FROM SignalMitBezeichnung
 
 
-SELECT K.Nummer AS Konfigurations_Nr, S.Nummer AS Stations_Nr, DPM.Name AS DPModus,
---CASE WHEN HWDPS.DPTypId = 0 OR HWDPS.DPTypId = 2 THEN 'E' ELSE 'A' END AS DPTyp_EA,
-DT.Name AS DPTyp_EA, 
+SELECT K.Nummer AS Konfigurations_Nr, S.Nummer AS Stations_Nr, HWM.SteckplatzNummer AS Modul_Steckplatznummer, 
+HWDPS.DPNummer AS DP_Nummer, HWDPS.AnzahlDP AS Anzahl_DP,
+CASE WHEN HWDPS.DPTypId = 0 OR HWDPS.DPTypId = 2 THEN 'E' ELSE 'A' END AS DPTyp_EA,
 CASE WHEN HWDPS.IstInvertiert = 1 THEN 'x' ELSE ' ' END AS Inv,
-HWM.SteckplatzNummer AS Modul_Steckplatznummer, MT.Name AS ModulTYP,
-HWDPS.DPNummer AS DP_Nummer, HWDPS.AnzahlDP AS Anzahl_DP, SourceM.Mittelwert, SourceG.DigitalesFilter,
+DPM.Name AS DPModus,
+MT.Name AS ModulTYP, SourceM.Mittelwert, SourceG.DigitalesFilter,
 SourceT.Transferzeit, SourceF.Fehlerintegrator,  V.Id AS VariablenId, V.SignalId AS SIGNAL_ID
 FROM Variable V
 INNER JOIN Station S
@@ -291,6 +299,7 @@ LEFT OUTER JOIN
 	ON H.HWDPSignalId = S.Id
 	WHERE H.Name = 'FehlerIntegrator'
 ) SourceF ON SourceF.VariablenId = V.Id
+ORDER BY ModulTYP
 
 DROP VIEW M1InterfaceView
 
