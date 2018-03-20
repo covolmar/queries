@@ -1,6 +1,6 @@
 USE LoeweNew
 USE Furli
-USE loewe213
+USE loewe213inklSQL
 
 SELECT Signal.Id, SignalFullName.Name 
 FROM Signal
@@ -249,7 +249,14 @@ SELECT K.Nummer AS Konfigurations_Nr, S.Nummer AS Stations_Nr, HWM.SteckplatzNum
 HWDPS.DPNummer AS DP_Nummer, HWDPS.AnzahlDP AS Anzahl_DP,
 CASE WHEN HWDPS.DPTypId = 0 OR HWDPS.DPTypId = 2 THEN 'E' ELSE 'A' END AS DPTyp_EA,
 CASE WHEN HWDPS.IstInvertiert = 1 THEN 'x' ELSE ' ' END AS Inv,
-DPM.Name AS DPModus,
+CASE 
+	WHEN DPM.Name = 'PT100' THEN SourceMerkmalLeiter.AnzahlLeiter
+	WHEN DPM.Name = 'PT1000' THEN SourceMerkmalLeiter.AnzahlLeiter
+	WHEN DPM.Name = 'Lampenkontrolle Ausgang' THEN SourceMerkmalLampenkontrolle.LampenKontrolle
+	WHEN DPM.Name = 'Digital Ein-/Ausgang' AND HWDPS.DPTypId = 0 THEN SourceMerkmalBlinkMode.BlinkMode
+	 
+	ELSE DPM.Name
+END AS DPModus,
 MT.Name AS ModulTYP, SourceM.Mittelwert, SourceG.DigitalesFilter,
 SourceT.Transferzeit, SourceF.Fehlerintegrator,  V.Id AS VariablenId, V.SignalId AS SIGNAL_ID
 FROM Variable V
@@ -299,9 +306,89 @@ LEFT OUTER JOIN
 	ON H.HWDPSignalId = S.Id
 	WHERE H.Name = 'FehlerIntegrator'
 ) SourceF ON SourceF.VariablenId = V.Id
+LEFT OUTER JOIN
+(
+	SELECT 
+	CASE 
+		WHEN H.Wert = 0 THEN '2_Leiter'
+		WHEN H.Wert = 1 THEN '3_Leiter'
+		WHEN H.Wert = 2 THEN '4_Leiter'
+	END AS AnzahlLeiter, 
+	S.VariablenId
+	FROM HW_DPMerkmal H
+	INNER JOIN HW_DPSignal S
+	ON H.HWDPSignalId = S.Id
+	WHERE H.Name = 'AnzahlLeiter'
+) SourceMerkmalLeiter ON SourceMerkmalLeiter.VariablenId = V.Id
+LEFT OUTER JOIN
+(
+	SELECT 
+	CASE 
+		WHEN H.Wert = 0 THEN 'D1'
+		WHEN H.Wert = 1 THEN 'IMP'
+		WHEN H.Wert = 2 THEN 'L1'
+		WHEN H.Wert = 3 THEN 'L2'
+		WHEN H.Wert = 4 THEN 'L3'
+	END AS LampenKontrolle,
+	S.VariablenId
+	FROM HW_DPMerkmal H
+	INNER JOIN HW_DPSignal S
+	ON H.HWDPSignalId = S.Id
+	WHERE H.Name = 'LampenKontrolle'
+) SourceMerkmalLampenkontrolle ON SourceMerkmalLampenkontrolle.VariablenId = V.Id
+LEFT OUTER JOIN
+(
+	SELECT 
+	CASE 
+		WHEN H.Wert = 0 THEN 'BLK1'
+		WHEN H.Wert = 1 THEN 'BLK2'
+		WHEN H.Wert = 2 THEN 'BLK3'
+		WHEN H.Wert = 3 THEN 'BM2'
+	END AS BlinkMode,
+	S.VariablenId
+	FROM HW_DPMerkmal H
+	INNER JOIN HW_DPSignal S
+	ON H.HWDPSignalId = S.Id
+	WHERE H.Name = 'BlinkMode'
+) SourceMerkmalBlinkMode ON SourceMerkmalBlinkMode.VariablenId = V.Id
+LEFT OUTER JOIN
+(
+	SELECT 
+	CASE 
+		WHEN H.Wert = 0 THEN ''
+	END AS ByteCount,
+	S.VariablenId
+	FROM HW_DPMerkmal H
+	INNER JOIN HW_DPSignal S
+	ON H.HWDPSignalId = S.Id
+	WHERE H.Name = 'ByteCount'
+) SourceMerkmalByteCount ON SourceMerkmalByteCount.VariablenId = V.Id
+LEFT OUTER JOIN
+(
+	SELECT 
+	CASE 
+		WHEN H.Wert = 0 THEN 'Binär'
+		WHEN H.Wert = 1 THEN 'BCD'
+		WHEN H.Wert = 2 THEN 'GRAY'
+	END AS MesswertCode,
+	S.VariablenId
+	FROM HW_DPMerkmal H
+	INNER JOIN HW_DPSignal S
+	ON H.HWDPSignalId = S.Id
+	WHERE H.Name = 'MesswertCode'
+) SourceMerkmalMesswertCode ON SourceMerkmalMesswertCode.VariablenId = V.Id
+
+
+
+
+
+
+
+
 ORDER BY ModulTYP
 
 DROP VIEW M1InterfaceView
+DROP VIEW ParameterView
 
 SELECT DPModus
 FROM HW_DPSignal
@@ -356,8 +443,8 @@ ORDER BY Name
 
 SELECT * FROM Variable
 
-SELECT ModulTyp FROM HWModul
-Order BY ModulTyp
+SELECT ModulTypId FROM HWModul
+Order BY ModulTypId
 
 SELECT Id FROM SignalFullName
 WHERE Name = '1.1BAA21.CE220B.XH32.PW00'
@@ -393,6 +480,39 @@ SELECT
 		WHEN HatRedundanz = 1 THEN ' ' ELSE 'x'
 	END AS NichtRedundant
 FROM Signal
+
+SELECT S.KonfigurationId AS Konfiguration, Var.StaNr AS Station,
+CASE 
+	WHEN Var.HatQuSVI = 1 THEN 'Q'
+	WHEN Var.HatSeSVI = 1 THEN 'S'
+	ELSE '' 
+END AS SVI_Q_S, 
+V.Id AS VariablenId, V.SignalId AS SignalId
+FROM VarQuSe Var
+INNER JOIN Variable V
+ON Var.VariableId = V.Id
+LEFT OUTER JOIN Station S
+ON Var.StaNr = S.Id
+ORDER BY SVI_Q_S
+
+SELECT * FROM VarQuSe
+Order By HatSeSVI
+
+
+
+SELECT S.KonfigurationId AS Konfiguration, Var.StaNr AS Station,
+CASE 
+	WHEN Var.HatQuMMI = 1 THEN 'Q'
+	WHEN Var.HatSeMMI = 1 THEN 'S'
+	ELSE '' 
+END AS Ritop_Q_S, 
+V.Id AS VariablenId, V.SignalId AS SignalId
+FROM VarQuSe Var
+INNER JOIN Variable V
+ON Var.VariableId = V.Id
+LEFT OUTER JOIN Station S
+ON Var.StaNr = S.Id
+
 
 
 

@@ -1,9 +1,9 @@
-CREATE VIEW M1InterfaceView AS
-SELECT K.Nummer AS Konfigurations_Nr, S.Nummer AS Stations_Nr, HWDPS.DPModus AS DPModus,
-CASE WHEN HWDPS.DPTyp = 0 OR HWDPS.DPTyp = 2 THEN 'E' ELSE 'A' END AS DPTyp_EA, 
+SELECT K.Nummer AS Konfigurations_Nr, S.Nummer AS Stations_Nr, HWM.SteckplatzNummer AS Modul_Steckplatznummer, 
+HWDPS.DPNummer AS DP_Nummer, HWDPS.AnzahlDP AS Anzahl_DP,
+CASE WHEN HWDPS.DPTypId = 0 OR HWDPS.DPTypId = 2 THEN 'E' ELSE 'A' END AS DPTyp_EA,
 CASE WHEN HWDPS.IstInvertiert = 1 THEN 'x' ELSE ' ' END AS Inv,
-HWM.SteckplatzNummer AS Modul_Steckplatznummer, HWM.ModulTyp AS ModulTYP,
-HWDPS.DPNummer AS DP_Nummer, HWDPS.AnzahlDP AS Anzahl_DP, SourceM.Mittelwert, SourceG.DigitalesFilter,
+DPM.Name AS DPModus,
+MT.Name AS ModulTYP, SourceM.Mittelwert, SourceG.DigitalesFilter,
 SourceT.Transferzeit, SourceF.Fehlerintegrator,  V.Id AS VariablenId, V.SignalId AS SIGNAL_ID
 FROM Variable V
 INNER JOIN Station S
@@ -12,8 +12,14 @@ INNER JOIN Konfiguration K
 ON S.KonfigurationId = K.Id
 INNER JOIN HW_DPSignal HWDPS
 ON V.Id = HWDPS.VariablenId
+INNER JOIN DPModus DPM
+ON HWDPS.DPModusId = DPM.Id AND HWDPS.DPTypId = DPM.DPTypId
+INNER JOIN DPTyp DT
+ON DT.Id = HWDPS.DPTypId
 INNER JOIN HWModul HWM
 ON HWM.Id = HWDPS.HWModulId
+INNER JOIN ModulTyp MT
+ON MT.Id = HWM.ModulTypId
 LEFT OUTER JOIN
 (
 	SELECT H.Wert AS Mittelwert, S.VariablenId
