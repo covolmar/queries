@@ -1,5 +1,5 @@
 CREATE VIEW SviView AS
-SELECT S.KonfigurationId AS Konfiguration, V.StationId AS Station, 
+SELECT S.KonfigurationId AS Konfiguration, V.StationId AS StationId, 
 CASE 
 	WHEN Var.HatQuSVI = 1 THEN 'Q'
 	WHEN Var.HatSeSVI = 1 THEN 'S'

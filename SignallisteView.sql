@@ -1,5 +1,3 @@
---USE loewe213inklSQL
-
 SELECT S.Id AS SIGNAL_ID, V.Id AS VariablenId, AO0, AO1, AO2, AO3, S.Name AS SO, BEREICH, BAUWERK, FUNKTION, ELEMENT, S.IndexText AS INDEX_TEXT, ST.Name AS Typ, V.StationId AS Q_S_Station,
 MFE0.MFEText_0, MFE1.MFEText_1, MFE2.MFEText_2, MFE3.MFEText_3, MFE4.MFEText_4, MFE5.MFEText_5, MFE6.MFEText_6, MFE7.MFEText_7,
 K.Nummer AS Konfigurations_Nr, Stat.Nummer AS Stations_Nr, HWM.SteckplatzNummer AS Modul_Steckplatznummer, 
@@ -167,9 +165,9 @@ LEFT OUTER JOIN
 (
 	SELECT 
 	CASE 
-		WHEN H.Wert = 0 THEN '2' --Leiter
-		WHEN H.Wert = 1 THEN '3' --Leiter
-		WHEN H.Wert = 2 THEN '4' --Leiter
+		WHEN H.Wert = 0 THEN '2'
+		WHEN H.Wert = 1 THEN '3'
+		WHEN H.Wert = 2 THEN '4'
 	END AS AnzahlLeiter, 
 	DPSig.VariablenId
 	FROM HW_DPMerkmal H

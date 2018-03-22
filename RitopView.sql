@@ -1,5 +1,5 @@
 CREATE VIEW RitopView AS
-SELECT S.KonfigurationId AS Konfiguration, Var.StaNr AS Station,
+SELECT S.KonfigurationId AS Konfiguration, V.StationId AS StationId,
 CASE 
 	WHEN Var.HatQuMMI = 1 THEN 'Q'
 	WHEN Var.HatSeMMI = 1 THEN 'S'
