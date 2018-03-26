@@ -391,7 +391,7 @@ FROM HW_DPSignal
 Order by DPTyp
 
 
-
+USE Tagesthal213
 
 SELECT *
 FROM 
@@ -439,7 +439,10 @@ SELECT ModulTypId FROM HWModul
 Order BY ModulTypId
 
 SELECT Id FROM SignalFullName
-WHERE Name = '1.1BAA21.CE220B.XH32.PW00'
+WHERE Name = '1.0LNA20.EC020.XM53.AL00'
+
+SELECT * FROM Variable V
+WHERE V.SignalId = 154436
 
 SELECT * FROM Signal
 WHERE Id = 1861033

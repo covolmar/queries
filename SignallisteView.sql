@@ -1,10 +1,22 @@
-SELECT S.Id AS SIGNAL_ID, V.Id AS VariablenId, AO0, AO1, AO2, AO3, S.Name AS SO, BEREICH, BAUWERK, FUNKTION, ELEMENT, S.IndexText AS INDEX_TEXT, ST.Name AS Typ, V.StationId AS Q_S_Station,
-MFE0.MFEText_0, MFE1.MFEText_1, MFE2.MFEText_2, MFE3.MFEText_3, MFE4.MFEText_4, MFE5.MFEText_5, MFE6.MFEText_6, MFE7.MFEText_7,
-K.Nummer AS Konfigurations_Nr, Stat.Nummer AS Stations_Nr, HWM.SteckplatzNummer AS Modul_Steckplatznummer, 
-HWDPS.DPNummer AS DP_Nummer, HWDPS.AnzahlDP AS Anzahl_DP,
-CASE WHEN HWDPS.DPTypId = 0 OR HWDPS.DPTypId = 2 THEN 'E' ELSE 'A' END AS DPTyp_EA,
-CASE WHEN HWDPS.IstInvertiert = 1 THEN 'x' ELSE ' ' END AS Inv,
-CASE 
+SELECT S.Id AS SignalId, MAX(AO0) AS AO0, MAX(AO1) AS A01, MAX(AO2) AS AO2, MAX(AO3) AS AO3, MAX(S.Name) AS SO,
+MAX(BEREICH) AS BEREICH, MAX(BAUWERK) AS BAUWERK, MAX(FUNKTION) AS FUNKTION, MAX(ELEMENT) AS ELEMENT, MAX(S.IndexText) AS INDEX_TEXT, MAX(ST.Name) AS Typ,
+
+MAX(MFE0.MFEText_0) AS MFEText0, MAX(MFE1.MFEText_1) AS MFEText1, MAX(MFE2.MFEText_2) AS MFEText2, MAX(MFE3.MFEText_3) AS MFEText3, 
+MAX(MFE4.MFEText_4) AS MFEText4, MAX(MFE5.MFEText_5) AS MFEText5, MAX(MFE6.MFEText_6) AS MFEText6, MAX(MFE7.MFEText_7) AS MFEText7,
+ 
+MAX(CASE
+	WHEN HWM.SteckplatzNummer IS NOT NULL THEN K.Nummer ELSE NULL
+END) AS Konfigurations_Nr, 
+
+MAX(CASE 
+WHEN HWM.SteckplatzNummer IS NOT NULL THEN Stat.Nummer ELSE NULL
+END) AS Stations_Nr, 
+
+MAX(HWM.SteckplatzNummer) AS Modul_Steckplatznummer, 
+MAX(HWDPS.DPNummer) AS DP_Nummer, MAX(HWDPS.AnzahlDP) AS Anzahl_DP,
+MAX(CASE WHEN HWDPS.DPTypId = 0 OR HWDPS.DPTypId = 2 THEN 'E' ELSE 'A' END) AS DPTyp_EA,
+MAX(CASE WHEN HWDPS.IstInvertiert = 1 THEN 'x' ELSE ' ' END) AS Inv,
+MAX(CASE 
 	WHEN DPM.Name = 'PT100' THEN 'PT100_' + CAST(SourceMerkmalLeiter.AnzahlLeiter AS VARCHAR(10))
 	WHEN DPM.Name = 'PT1000' THEN 'PT1000_' + CAST(SourceMerkmalLeiter.AnzahlLeiter AS VARCHAR(10))
 	WHEN DPM.Name = 'Lampenkontrolle Ausgang' THEN SourceMerkmalLampenkontrolle.LampenKontrolle
@@ -14,36 +26,48 @@ CASE
 	WHEN DPM.Name = 'Digital Ein-/Ausgang' AND HWDPS.DPTypId = 1 AND SourceMerkmalLampenkontrolle.LampenKontrolle IS NULL THEN 'D1'
 	WHEN DPM.Name = 'Digital Ein-/Ausgang' AND HWDPS.DPTypId = 0 THEN ' '
 	ELSE DPM.Name
-END AS DPModus,
-MT.Name AS ModulTYP, SourceM.Mittelwert, SourceG.DigitalesFilter, SourceT.Transferzeit, SourceF.Fehlerintegrator,
-S.KommentarText, S.Wert, Zeiteinbindung =
-CASE 
+END) AS DPModus,
+MAX(MT.Name) AS ModulTYP, MAX(SourceM.Mittelwert) AS Mittelwert, MAX(SourceG.DigitalesFilter) AS DigitalesFilter, MAX(SourceT.Transferzeit) AS Transferzeit, MAX(SourceF.Fehlerintegrator) AS Fehlerintegrator,
+MAX(S.KommentarText) AS Kommentar, MAX(S.Wert) AS Startwert, Zeiteinbindung =
+MAX(CASE 
 	WHEN HatZeit = 1 THEN 'x' ELSE ' '
-END,
+END),
 Impulsbefehl =
-CASE
+MAX(CASE
 	WHEN HatImpulsBefehl = 1 THEN 'x' ELSE ' '
-END,
+END),
 UebertragungMitPrio =
-CASE
+MAX(CASE
 	WHEN HatPrivileg = 1 THEN 'x' ELSE ' '
-END,
+END),
 NichtRedundant =
-CASE
+MAX(CASE
 	WHEN HatRedundanz = 1 THEN ' ' ELSE 'x'
-END,
-S.DavosVerdichtung AS Verdichtung, S.DavosIntervall AS Intervall, S.DavosElemente AS Elemente,
-Q.ParaNr AS ParaBlockNr, Q.ParaMin AS ParaMin, Q.ParaMax AS ParaMax, Q.ParaNKS AS Nachkommastellen,
-CASE 
+END),
+MAX(S.DavosVerdichtung) AS Verdichtung, MAX(S.DavosIntervall) AS Intervall, MAX(S.DavosElemente) AS Elemente,
+MAX(Q.ParaNr) AS ParaBlockNr, MAX(Q.ParaMin) AS ParaMin, MAX(Q.ParaMax) AS ParaMax, MAX(Q.ParaNKS) AS Nachkommastellen,
+
+MAX(CASE 
+	WHEN Q.HatQuSVI = 1 THEN Q.StaNr
+	WHEN Q.HatSeSVI = 1 THEN Q.StaNr
+	ELSE ' ' 
+END) AS SVI_Station,
+MAX(CASE 
 	WHEN Q.HatQuSVI = 1 THEN 'Q'
 	WHEN Q.HatSeSVI = 1 THEN 'S'
 	ELSE ' ' 
-END AS SVI_Q_S,
-CASE 
+END) AS SVI_Q_S,
+
+MAX(CASE 
+	WHEN Q.HatQuMMI = 1 THEN Q.StaNr
+	WHEN Q.HatSeMMI = 1 THEN Q.StaNr
+	ELSE ' '
+END) AS Ritop_Station,
+MAX(CASE 
 	WHEN Q.HatQuMMI = 1 THEN 'Q'
 	WHEN Q.HatSeMMI = 1 THEN 'S'
 	ELSE ' '
-END AS Ritop_Q_S
+END) AS Ritop_Q_S
 FROM Signal S
 INNER JOIN(
 	SELECT KKS0.Name AS AO0, KKS0.Bezeichnung AS BEREICH,
@@ -58,6 +82,8 @@ INNER JOIN(
 ) A ON A.KKS3_ID = S.AnlagenObjektId
 INNER JOIN SignalTyp ST
 ON ST.Id = S.TypId
+LEFT OUTER JOIN Variable V
+ON V.SignalId = S.Id
 LEFT OUTER JOIN 
 (
 	SELECT MFEText AS MFEText_0, SignalId AS Signal_Id 
@@ -113,11 +139,9 @@ LEFT OUTER JOIN
 	WHERE Nummer = 7
 ) MFE7
 ON MFE6.Signal_Id = MFE7.Signal_Id
-INNER JOIN Variable V
-ON V.SignalId = S.Id
-INNER JOIN Station Stat
+LEFT OUTER JOIN Station Stat
 ON Stat.Id = V.StationId
-INNER JOIN Konfiguration K
+LEFT OUTER JOIN Konfiguration K
 ON Stat.KonfigurationId = K.Id
 LEFT OUTER JOIN HW_DPSignal HWDPS
 ON V.Id = HWDPS.VariablenId
@@ -220,5 +244,6 @@ LEFT OUTER JOIN
 	ON H.HWDPSignalId = DPSig.Id
 	WHERE H.Name = 'MesswertCode'
 ) SourceMerkmalMesswertCode ON SourceMerkmalMesswertCode.VariablenId = V.Id
-INNER JOIN VarQuSe Q
+LEFT OUTER JOIN VarQuSe Q
 ON Q.VariableId = V.Id
+GROUP BY S.Id
