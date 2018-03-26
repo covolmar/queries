@@ -1,13 +1,14 @@
-CREATE VIEW RitopView AS
-SELECT S.KonfigurationId AS Konfiguration, V.StationId AS StationId,
+SELECT K.Nummer AS riflex_ritop_configuration, S.Nummer AS riflex_ritop_station,
 CASE 
-	WHEN Var.HatQuMMI = 1 THEN 'Q'
-	WHEN Var.HatSeMMI = 1 THEN 'S'
+	WHEN Q.HatQuMMI = 1 THEN 'Q'
+	WHEN Q.HatSeMMI = 1 THEN 'S'
 	ELSE '' 
-END AS Ritop_Q_S, 
-V.Id AS VariablenId, V.SignalId AS SignalId
-FROM VarQuSe Var
-INNER JOIN Variable V
-ON Var.VariableId = V.Id
-LEFT OUTER JOIN Station S
-ON Var.StaNr = S.Id
+END AS riflex_ritop_direction, 
+V.Id AS VariableId, V.SignalId AS SignalId, S.Id AS StationId
+FROM Variable V
+INNER JOIN VarQuSe Q
+ON Q.VariableId = V.Id
+INNER JOIN Station S
+ON V.StationId = S.Id
+INNER JOIN Konfiguration K
+ON K.Id = S.KonfigurationId

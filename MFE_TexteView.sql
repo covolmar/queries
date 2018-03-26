@@ -1,6 +1,13 @@
-CREATE VIEW MFE_Texte AS
-SELECT MFE0.MFEText_0, MFE1.MFEText_1, MFE2.MFEText_2, MFE3.MFEText_3,
-MFE4.MFEText_4, MFE5.MFEText_5, MFE6.MFEText_6, MFE7.MFEText_7, MFE0.Signal_Id AS SIGNAL_ID
+SELECT MFE0.MFEText_0 AS riflex_signal_mfe,
+MFE1.MFEText_1 AS riflex_signal_mfe_1,
+MFE2.MFEText_2 AS riflex_signal_mfe_2,
+MFE3.MFEText_3 AS riflex_signal_mfe_3,
+MFE4.MFEText_4 AS riflex_signal_mfe_4,
+MFE5.MFEText_5 AS riflex_signal_mfe_5,
+MFE6.MFEText_6 AS riflex_signal_mfe_6,
+MFE7.MFEText_7 AS riflex_signal_mfe_7,
+(SELECT KommentarText FROM Signal WHERE Id = MFE0.Signal_Id) AS riflex_signal_comment,
+MFE0.Signal_Id AS SignalId
 FROM 
 (
 	SELECT MFEText AS MFEText_0, SignalId AS Signal_Id 

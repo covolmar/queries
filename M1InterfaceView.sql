@@ -1,7 +1,7 @@
-SELECT K.Nummer AS Konfigurations_Nr, S.Nummer AS Stations_Nr, HWM.SteckplatzNummer AS Modul_Steckplatznummer, 
-HWDPS.DPNummer AS DP_Nummer, HWDPS.AnzahlDP AS Anzahl_DP,
-CASE WHEN HWDPS.DPTypId = 0 OR HWDPS.DPTypId = 2 THEN 'E' ELSE 'A' END AS DPTyp_EA,
-CASE WHEN HWDPS.IstInvertiert = 1 THEN 'x' ELSE ' ' END AS Inv,
+SELECT K.Name AS riflex_io_configuration_name, S.Name AS riflex_io_station_name, K.Nummer AS riflex_io_configuration, S.Nummer AS riflex_io_station,
+HWM.SteckplatzNummer AS riflex_io_module, MT.Name AS riflex_io_modul_name,
+CASE WHEN HWDPS.DPTypId = 0 OR HWDPS.DPTypId = 2 THEN 'E' ELSE 'A' END AS riflex_io_direction,
+HWDPS.DPNummer AS riflex_io_start_datapoint, (HWDPS.DPNummer + HWDPS.AnzahlDP) AS riflex_io_end_datapoint,
 CASE 
 	WHEN DPM.Name = 'PT100' THEN 'PT100_' + CAST(SourceMerkmalLeiter.AnzahlLeiter AS VARCHAR(10))
 	WHEN DPM.Name = 'PT1000' THEN 'PT1000_' + CAST(SourceMerkmalLeiter.AnzahlLeiter AS VARCHAR(10))
@@ -12,15 +12,20 @@ CASE
 	WHEN DPM.Name = 'Digital Ein-/Ausgang' AND HWDPS.DPTypId = 1 AND SourceMerkmalLampenkontrolle.LampenKontrolle IS NULL THEN 'D1'
 	WHEN DPM.Name = 'Digital Ein-/Ausgang' AND HWDPS.DPTypId = 0 THEN ' '
 	ELSE DPM.Name
-END AS DPModus,
-MT.Name AS ModulTYP, SourceM.Mittelwert, SourceG.DigitalesFilter,
-SourceT.Transferzeit, SourceF.Fehlerintegrator,  V.Id AS VariablenId, V.SignalId AS SignalId, S.Id AS StationId
+END AS riflex_io_signal_mode, 
+CASE
+	WHEN SourceSkaY0.SkalierungY0 IS NOT NULL AND SourceSkaY1.SkalierungY1 IS NOT NULL THEN SourceSkaY0.SkalierungY0 + '..' + SourceSkaY1.SkalierungY1
+	ELSE ''
+END AS riflex_io_measurement_range,
+CASE WHEN HWDPS.IstInvertiert = 1 THEN 'x' ELSE ' ' END AS riflex_io_inversion,
+SourceM.Mittelwert AS riflex_io_average, SourceG.DigitalesFilter AS riflex_io_cutoff_f,
+SourceT.Transferzeit AS riflex_io_transfer_time, SourceF.Fehlerintegrator AS riflex_io_failure_integrator,  V.Id AS VariableId, V.SignalId AS SignalId, S.Id AS StationId
 FROM Variable V
-INNER JOIN Station S
+LEFT OUTER JOIN Station S
 ON S.Id = V.StationId
-INNER JOIN Konfiguration K
+LEFT OUTER JOIN Konfiguration K
 ON S.KonfigurationId = K.Id
-INNER JOIN HW_DPSignal HWDPS
+LEFT OUTER JOIN HW_DPSignal HWDPS
 ON V.Id = HWDPS.VariablenId
 INNER JOIN DPModus DPM
 ON HWDPS.DPModusId = DPM.Id AND HWDPS.DPTypId = DPM.DPTypId
@@ -62,6 +67,22 @@ LEFT OUTER JOIN
 	ON H.HWDPSignalId = S.Id
 	WHERE H.Name = 'FehlerIntegrator'
 ) SourceF ON SourceF.VariablenId = V.Id
+LEFT OUTER JOIN
+(
+	SELECT H.Wert AS SkalierungY0, S.VariablenId
+	FROM HW_DPMerkmal H
+	INNER JOIN HW_DPSignal S
+	ON H.HWDPSignalId = S.Id
+	WHERE H.Name = 'WertY0'
+) SourceSkaY0 ON SourceSkaY0.VariablenId = V.Id
+LEFT OUTER JOIN
+(
+	SELECT H.Wert AS SkalierungY1, S.VariablenId
+	FROM HW_DPMerkmal H
+	INNER JOIN HW_DPSignal S
+	ON H.HWDPSignalId = S.Id
+	WHERE H.Name = 'WertY1'
+) SourceSkaY1 ON SourceSkaY1.VariablenId = V.Id
 LEFT OUTER JOIN
 (
 	SELECT 

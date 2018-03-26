@@ -7,8 +7,7 @@ BEREICH AS riflex_plant_object_description,
 BAUWERK AS riflex_plant_object_description_1,
 FUNKTION AS riflex_plant_object_description_2,
 ELEMENT AS riflex_plant_object_description_3,
-S.IndexText AS riflex_signal_description, 
-S.KommentarText AS riflex_signal_comment, 
+S.IndexText AS riflex_signal_description,
 ST.Name AS riflex_signal_type,
 (
 	SELECT COUNT(*) 
