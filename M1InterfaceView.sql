@@ -1,8 +1,26 @@
-SELECT K.Name AS riflex_io_configuration_name, S.Name AS riflex_io_station_name, K.Nummer AS riflex_io_configuration, S.Nummer AS riflex_io_station,
+SELECT 
+CASE
+	WHEN HWM.SteckplatzNummer IS NOT NULL THEN K.Name
+END AS riflex_io_configuration_name,
+CASE
+	WHEN HWM.SteckplatzNummer IS NOT NULL THEN S.Name
+END AS riflex_io_station_name,
+CASE
+	WHEN HWM.SteckplatzNummer IS NOT NULL THEN K.Nummer
+END AS riflex_io_configuration,
+CASE
+	WHEN HWM.SteckplatzNummer IS NOT NULL THEN S.Nummer
+END AS riflex_io_station,
 HWM.SteckplatzNummer AS riflex_io_module, MT.Name AS riflex_io_modul_name,
-CASE WHEN HWDPS.DPTypId = 0 OR HWDPS.DPTypId = 2 THEN 'E' ELSE 'A' END AS riflex_io_direction,
-HWDPS.DPNummer AS riflex_io_start_datapoint, (HWDPS.DPNummer + HWDPS.AnzahlDP) AS riflex_io_end_datapoint,
 CASE 
+	WHEN HWM.SteckplatzNummer IS NOT NULL THEN 
+		CASE 
+			WHEN HWDPS.DPTypId = 0 OR HWDPS.DPTypId = 2 THEN 'E' ELSE 'A' 
+		END
+END AS riflex_io_direction,
+HWDPS.DPNummer AS riflex_io_start_datapoint, NULL AS riflex_io_end_datapoint,
+CASE
+	WHEN MT.Name = 'GMP232' OR MT.Name = 'GM260' OR MT.Name = 'GSP274' OR MT.Name = 'GMP232X' OR MT.Name = 'CNT204' THEN NULL
 	WHEN DPM.Name = 'PT100' THEN 'PT100_' + CAST(SourceMerkmalLeiter.AnzahlLeiter AS VARCHAR(10))
 	WHEN DPM.Name = 'PT1000' THEN 'PT1000_' + CAST(SourceMerkmalLeiter.AnzahlLeiter AS VARCHAR(10))
 	WHEN DPM.Name = 'Lampenkontrolle Ausgang' THEN SourceMerkmalLampenkontrolle.LampenKontrolle
@@ -11,21 +29,22 @@ CASE
 	WHEN DPM.Name = 'Digital Ein-/Ausgang' AND HWDPS.DPTypId = 1 AND LEN(SourceMerkmalLampenkontrolle.LampenKontrolle) > 0 THEN SourceMerkmalLampenkontrolle.LampenKontrolle
 	WHEN DPM.Name = 'Digital Ein-/Ausgang' AND HWDPS.DPTypId = 1 AND SourceMerkmalLampenkontrolle.LampenKontrolle IS NULL THEN 'D1'
 	WHEN DPM.Name = 'Digital Ein-/Ausgang' AND HWDPS.DPTypId = 0 THEN ' '
+	WHEN DPM.Name = 'Zaehlwert Ein-/Ausgang' AND HWDPS.DPTypId = 0 THEN ' '
 	ELSE DPM.Name
-END AS riflex_io_signal_mode, 
+END AS riflex_io_signal_mode,
 CASE
 	WHEN SourceSkaY0.SkalierungY0 IS NOT NULL AND SourceSkaY1.SkalierungY1 IS NOT NULL THEN SourceSkaY0.SkalierungY0 + '..' + SourceSkaY1.SkalierungY1
-	ELSE ''
+	ELSE NULL
 END AS riflex_io_measurement_range,
-CASE WHEN HWDPS.IstInvertiert = 1 THEN 'x' ELSE ' ' END AS riflex_io_inversion,
+CASE WHEN HWDPS.IstInvertiert = 1 THEN 'x' ELSE NULL END AS riflex_io_inversion,
 SourceM.Mittelwert AS riflex_io_average, SourceG.DigitalesFilter AS riflex_io_cutoff_f,
 SourceT.Transferzeit AS riflex_io_transfer_time, SourceF.Fehlerintegrator AS riflex_io_failure_integrator,  V.Id AS VariableId, V.SignalId AS SignalId, S.Id AS StationId
 FROM Variable V
-LEFT OUTER JOIN Station S
+INNER JOIN Station S
 ON S.Id = V.StationId
-LEFT OUTER JOIN Konfiguration K
+INNER JOIN Konfiguration K
 ON S.KonfigurationId = K.Id
-LEFT OUTER JOIN HW_DPSignal HWDPS
+INNER JOIN HW_DPSignal HWDPS
 ON V.Id = HWDPS.VariablenId
 INNER JOIN DPModus DPM
 ON HWDPS.DPModusId = DPM.Id AND HWDPS.DPTypId = DPM.DPTypId
