@@ -29,13 +29,16 @@ CASE
 END AS riflex_variable_destination_station,
 V.Id AS VariablenId,V.SignalId AS SignalId, S.Id AS StationId
 FROM Variable V
-LEFT OUTER JOIN Station S
+INNER JOIN Signal Sig
+ON Sig.Id = V.SignalId
+INNER JOIN Station S
 ON V.StationId = S.Id
-LEFT OUTER JOIN Konfiguration K
+INNER JOIN Konfiguration K
 ON K.Id = S.KonfigurationId
-LEFT OUTER JOIN VarQuSe Q
+INNER JOIN VarQuSe Q
 ON Q.VariableId = V.Id
-ORDER BY VariableId
+WHERE Sig.GruppeId = 1 OR Sig.GruppeId = 3 OR Sig.GruppeId = 4
+
 
 
 --SELECT Konf_Nr, Stat_Nr, V.Id, V.SignalId, Sub.StationId

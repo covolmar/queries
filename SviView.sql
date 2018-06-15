@@ -23,3 +23,4 @@ LEFT OUTER JOIN
 	INNER JOIN Station S
 	ON S.KonfigurationId = K.Id
 )Sub ON Sub.Stat_Nr = Q.StaNr
+WHERE Q.HatQuSVI = 1 OR Q.HatSeSVI = 1
